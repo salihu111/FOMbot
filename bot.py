@@ -47,7 +47,12 @@ PAGE_CACHE_DIR = Path("/tmp/fom_page_cache")
 PDF_PATH = Path("data/FOM_REV_25B.pdf")
 
 PAGE_CACHE_DIR.mkdir(exist_ok=True)
-groq_client = Groq(api_key=GROQ_API_KEY)
+#groq_client = Groq(api_key=GROQ_API_KEY)
+groq_client = Groq(
+    api_key=GROQ_API_KEY,
+    timeout=60.0,
+    max_retries=2,
+)
 
 SYSTEM_PROMPT = """You are a flight operations reference assistant for Ethiopian \
 Airlines First Officers, answering strictly from the excerpts of the Flight \
