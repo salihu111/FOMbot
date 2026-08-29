@@ -74,23 +74,26 @@ def extract_chunks() -> list:
     return chunks
 
 
-def embed_texts(texts: list, batch_size: int = 16) -> np.ndarray:
-    """Embed texts in small batches to keep RAM usage under 200MB on Railway."""
-    from fastembed import TextEmbedding
+# 1. Initialize model GLOBALLY once at the top level
+from fastembed import TextEmbedding
 
-    model = TextEmbedding(model_name=EMBED_MODEL_NAME)
-    all_vectors = []
+print("Loading FastEmbed model into RAM...")
+_MODEL = TextEmbedding(model_name=EMBED_MODEL_NAME)
+
+
+def embed_texts(texts: list) -> np.ndarray:
+    """Embed texts using fastembed's native low-memory batching."""
+    # Pass the list directly to model.embed with batch_size=8
+    generator = _MODEL.embed(texts, batch_size=8)
     
-    # Process pages in small chunks of 16 so RAM doesn't spike
-    for i in range(0, len(texts), batch_size):
-        batch = texts[i:i + batch_size]
-        vectors = list(model.embed(batch))
-        all_vectors.extend(vectors)
-        
-    matrix = np.array(all_vectors, dtype=np.float32)
+    # Convert generator to numpy matrix
+    matrix = np.array(list(generator), dtype=np.float32)
+    
+    # Cosine normalization
     norms = np.linalg.norm(matrix, axis=1, keepdims=True)
     norms[norms == 0] = 1.0
     return matrix / norms
+
 
 
 
